@@ -195,6 +195,26 @@
         <div class="main-list" id="listContainer"></div>
     </div>
 
+    <div class="start-panel" id="catPanel" style="display:none; max-width:520px;">
+        <div class="panel-title" style="font-size:16px;">Kategori Seç</div>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="catFilter" class="search-box" placeholder="Kategori ara..." onkeyup="filterCats()">
+            <button class="btn-dark" style="width:auto; white-space:nowrap; padding:10px 14px;" onclick="toggleAllCats()">Tümü</button>
+        </div>
+        <div id="catList" style="max-height:48vh; overflow-y:auto; border:1px solid var(--border-color); border-radius:12px; background:var(--panel-bg2); padding:6px; margin-bottom:14px;"></div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn-dark" style="flex:1;" onclick="backToStart()">Geri</button>
+            <button class="btn-main" style="flex:2;" onclick="loadSelectedCategories()">Seçilenleri Yükle</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:12px; justify-content:center;">
+            <label style="margin:0; text-transform:none;">Format:</label>
+            <select id="fmtSelect" class="search-box" style="width:auto; padding:6px 10px;">
+                <option value="ts">.ts</option>
+                <option value="m3u8">.m3u8 (HLS)</option>
+            </select>
+        </div>
+    </div>
+
 <script>
     let appData = {};
     let groupOrder = [];
@@ -219,7 +239,9 @@
         return !!txt && (txt.indexOf('#EXTM3U') !== -1 || txt.indexOf('#EXTINF') !== -1);
     }
 
-    async function fetchViaProxies(url){
+    // Genel proxy fetch: validator(text) true dönerse kabul.
+    async function fetchViaProxies(url, validator){
+        validator = validator || looksLikeM3U;
         let lastErr = "";
         for(const p of PROXIES){
             try{
@@ -230,11 +252,16 @@
                 if(!resp.ok){ lastErr = "HTTP "+resp.status; continue; }
                 let text = await resp.text();
                 if(p.json){ try{ text = (JSON.parse(text).contents)||''; }catch(_){ text=''; } }
-                if(looksLikeM3U(text)) return text;
-                lastErr = "sunucu M3U döndürmedi (kullanıcı/şifre/port hatalı olabilir)";
+                if(validator(text)) return text;
+                lastErr = "sunucu beklenen içeriği döndürmedi";
             }catch(e){ lastErr = e.name === 'AbortError' ? "zaman aşımı (liste çok büyük olabilir)" : "bağlantı hatası"; }
         }
         throw new Error(lastErr || "bilinmeyen hata");
+    }
+    function looksLikeJSON(t){ if(!t) return false; const s=t.trim()[0]; return s==='[' || s==='{'; }
+    async function fetchJSON(url){
+        const txt = await fetchViaProxies(url, looksLikeJSON);
+        return JSON.parse(txt);
     }
 
     async function fetchDirectUrl() {
@@ -251,17 +278,107 @@
         }
     }
 
-    function generateLinkAndFetch() {
+    // --- XTREAM PANEL (get.php yerine API + kategori seçimi) ---
+    let XT = null;          // {host,user,pass}
+    let XT_CATS = [];       // [{category_id, category_name}]
+
+    function sanitizeHost(h){
+        if(!/^https?:\/\//i.test(h)) h = 'http://' + h;
+        h = h.replace(/\/+$/,'');
+        h = h.replace(/\/(get|player_api|panel_api)\.php.*$/i,'');
+        return h;
+    }
+
+    async function generateLinkAndFetch() {
         let host = document.getElementById('host').value.trim();
         const user = document.getElementById('user').value.trim();
         const pass = document.getElementById('pass').value.trim();
         if(!host || !user || !pass) return alert("Bilgiler eksik.");
-        if(!/^https?:\/\//i.test(host)) host = 'http://' + host;
-        host = host.replace(/\/+$/,'');                 // sondaki / temizle
-        host = host.replace(/\/(get|player_api|panel_api)\.php.*$/i,''); // yanlışlıkla eklenen path'i temizle
-        const url = `${host}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u_plus&output=ts`;
-        document.getElementById('directUrl').value = url;
-        fetchDirectUrl();
+        host = sanitizeHost(host);
+        XT = { host, user, pass };
+        const base = `${host}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+        startLoading();
+        try{
+            // Önce hesabı doğrula
+            const info = await fetchJSON(base);
+            if(!info || !info.user_info || info.user_info.auth !== 1){
+                stopLoading();
+                return alert("Giriş başarısız. Kullanıcı adı / şifre / sunucu hatalı olabilir.");
+            }
+            // Sunucu gerçek port'u bildirdiyse onu kullan (URL'ler doğru olsun)
+            const si = info.server_info || {};
+            if(si.url && si.port){
+                const proto = (si.server_protocol||'http');
+                XT.host = `${proto}://${si.url}:${si.port}`;
+            }
+            const cats = await fetchJSON(base + "&action=get_live_categories");
+            XT_CATS = Array.isArray(cats) ? cats : [];
+            stopLoading();
+            if(!XT_CATS.length) return alert("Kategori bulunamadı.");
+            showCatPanel();
+        }catch(err){
+            stopLoading();
+            alert("Panele bağlanılamadı ("+err.message+").\n\nHost'u port ile yaz (ör. http://cf.tvtel.cc:80) ve tekrar dene.");
+        }
+    }
+
+    function showCatPanel(){
+        document.getElementById('startPanel').style.display = 'none';
+        document.getElementById('catPanel').style.display = 'block';
+        renderCatList();
+    }
+    function backToStart(){
+        document.getElementById('catPanel').style.display = 'none';
+        document.getElementById('startPanel').style.display = 'block';
+    }
+    function renderCatList(){
+        const box = document.getElementById('catList');
+        box.innerHTML = XT_CATS.map((c,i)=>`
+            <label style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px;"
+                   onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" class="cat-cb" value="${i}" style="accent-color:var(--accent-color); transform:scale(1.15);">
+                <span>${c.category_name}</span>
+            </label>`).join('');
+    }
+    function filterCats(){
+        const t = document.getElementById('catFilter').value.toLowerCase();
+        document.querySelectorAll('#catList label').forEach(l=>{
+            l.style.display = l.innerText.toLowerCase().includes(t) ? 'flex' : 'none';
+        });
+    }
+    function toggleAllCats(){
+        const visible = [...document.querySelectorAll('#catList label')].filter(l=>l.style.display!=='none');
+        const allOn = visible.every(l=>l.querySelector('.cat-cb').checked);
+        visible.forEach(l=>l.querySelector('.cat-cb').checked = !allOn);
+    }
+
+    async function loadSelectedCategories(){
+        const picked = [...document.querySelectorAll('.cat-cb:checked')].map(cb=>XT_CATS[+cb.value]);
+        if(!picked.length) return alert("En az bir kategori seç.");
+        const fmt = document.getElementById('fmtSelect').value || 'ts';
+        const base = `${XT.host}/player_api.php?username=${encodeURIComponent(XT.user)}&password=${encodeURIComponent(XT.pass)}`;
+        startLoading();
+        try{
+            let m3u = "#EXTM3U\n";
+            let total = 0;
+            for(const cat of picked){
+                const streams = await fetchJSON(base + "&action=get_live_streams&category_id=" + encodeURIComponent(cat.category_id));
+                (Array.isArray(streams)?streams:[]).forEach(s=>{
+                    const name = (s.name||'').replace(/,/g,' ');
+                    const logo = s.stream_icon||'';
+                    const link = `${XT.host}/live/${encodeURIComponent(XT.user)}/${encodeURIComponent(XT.pass)}/${s.stream_id}.${fmt}`;
+                    m3u += `#EXTINF:-1 tvg-name="${name}" tvg-logo="${logo}" group-title="${cat.category_name}",${name}\n${link}\n`;
+                    total++;
+                });
+            }
+            document.getElementById('catPanel').style.display = 'none';
+            stopLoading();
+            if(!total) return alert("Seçilen kategorilerde kanal bulunamadı.");
+            parseM3U(m3u);
+        }catch(err){
+            stopLoading();
+            alert("Kanallar çekilemedi ("+err.message+"). Daha az kategori seçip tekrar dene.");
+        }
     }
 
     const dropArea = document.getElementById('dropArea');
