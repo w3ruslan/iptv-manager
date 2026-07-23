@@ -164,8 +164,8 @@
         </div>
 
         <div id="tab2" class="tab-content">
-            <label>Sunucu</label>
-            <input type="text" id="host" placeholder="http://...">
+            <label>Sunucu (port dahil)</label>
+            <input type="text" id="host" placeholder="http://sunucu.com:8080">
             <label>Kullanıcı Adı</label>
             <input type="text" id="user">
             <label>Şifre</label>
@@ -207,33 +207,34 @@
         document.getElementById(tabId).classList.add('active');
     }
 
-    // Farklı CORS proxy'leri (biri çökerse diğeri denenir)
+    // Farklı CORS proxy'leri (biri çökerse diğeri denenir).
+    // json:true olanlar {contents:"..."} döner, ondan çıkarırız.
     const PROXIES = [
-        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-        u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,
-        u => `https://thingproxy.freeboard.io/fetch/${u}`
+        { name:'allorigins-raw', url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, json:false },
+        { name:'allorigins-get', url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json:true },
+        { name:'codetabs',       url: u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, json:false }
     ];
 
     function looksLikeM3U(txt){
-        return txt && txt.indexOf('#EXTM3U') !== -1 || (txt && txt.indexOf('#EXTINF') !== -1);
+        return !!txt && (txt.indexOf('#EXTM3U') !== -1 || txt.indexOf('#EXTINF') !== -1);
     }
 
     async function fetchViaProxies(url){
         let lastErr = "";
-        for(const build of PROXIES){
+        for(const p of PROXIES){
             try{
                 const ctrl = new AbortController();
-                const timer = setTimeout(()=>ctrl.abort(), 25000);
-                const resp = await fetch(build(url), { signal: ctrl.signal });
+                const timer = setTimeout(()=>ctrl.abort(), 30000);
+                const resp = await fetch(p.url(url), { signal: ctrl.signal });
                 clearTimeout(timer);
                 if(!resp.ok){ lastErr = "HTTP "+resp.status; continue; }
-                const text = await resp.text();
+                let text = await resp.text();
+                if(p.json){ try{ text = (JSON.parse(text).contents)||''; }catch(_){ text=''; } }
                 if(looksLikeM3U(text)) return text;
-                lastErr = "Geçersiz içerik (M3U değil)";
-            }catch(e){ lastErr = e.name === 'AbortError' ? "Zaman aşımı" : "Bağlantı hatası"; }
+                lastErr = "sunucu M3U döndürmedi (kullanıcı/şifre/port hatalı olabilir)";
+            }catch(e){ lastErr = e.name === 'AbortError' ? "zaman aşımı (liste çok büyük olabilir)" : "bağlantı hatası"; }
         }
-        throw new Error(lastErr || "Bilinmeyen hata");
+        throw new Error(lastErr || "bilinmeyen hata");
     }
 
     async function fetchDirectUrl() {
