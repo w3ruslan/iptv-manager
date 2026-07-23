@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPTV V10 - NOIRE EDITION</title>
+<style>
+    /* --- V10 MONOKROM TEMA --- */
+    :root {
+        --bg-color: #000000;
+        --panel-bg: #111111;
+        --border-color: #333333;
+        --text-main: #eeeeee;
+        --text-dim: #888888;
+        --accent-color: #ffffff; /* Vurgular Beyaz */
+        --hover-bg: #222222;
+        --selected-bg: #333333;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        margin: 0; padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        height: 100vh; box-sizing: border-box; overflow: hidden;
+    }
+
+    /* GİRİŞ PANELİ */
+    .start-panel {
+        background: var(--panel-bg); padding: 25px; border: 1px solid var(--border-color);
+        border-radius: 0; /* Köşeli tasarım daha ciddi durur */
+        width: 95%; max-width: 600px;
+        box-shadow: 0 0 20px rgba(255,255,255,0.05); z-index: 10;
+    }
+    .panel-title { text-align: center; color: var(--accent-color); margin-bottom: 20px; font-size: 20px; letter-spacing: 2px; text-transform: uppercase; font-weight: 300; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+    .tabs { display: flex; justify-content: center; margin-bottom: 20px; }
+    .tab-btn {
+        background: none; border: none; color: var(--text-dim); padding: 10px 20px; cursor: pointer; font-size: 13px; text-transform: uppercase;
+        border-bottom: 2px solid transparent; transition: 0.3s;
+    }
+    .tab-btn.active { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    label { display: block; margin-bottom: 5px; color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    input[type="text"], input[type="password"] {
+        width: 100%; padding: 12px; border-radius: 0;
+        border: 1px solid var(--border-color); background: #000; color: #fff; box-sizing: border-box; margin-bottom: 15px;
+        font-family: monospace;
+    }
+    input:focus { border-color: #fff; outline: none; }
+
+    /* SİYAH BEYAZ BUTONLAR */
+    button { cursor: pointer; padding: 12px; border-radius: 0; border: 1px solid var(--border-color); font-weight: bold; transition: 0.2s; width: 100%; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Ana Buton (Beyaz) */
+    .btn-main { background: #fff; color: #000; border: 1px solid #fff; }
+    .btn-main:hover { background: #ccc; border-color: #ccc; }
+
+    /* İkincil Buton (Siyah/Gri) */
+    .btn-dark { background: #222; color: #fff; border: 1px solid #333; }
+    .btn-dark:hover { background: #333; border-color: #555; }
+
+    /* Silme Butonu (Koyu ama belirgin) */
+    .btn-danger { background: #000; color: #fff; border: 1px solid #555; }
+    .btn-danger:hover { background: #333; border-color: #fff; }
+
+    .drop-area {
+        border: 1px dashed #555; background: #0a0a0a;
+        padding: 40px; cursor: pointer; text-align: center; color: #888; transition: 0.3s;
+    }
+    .drop-area:hover { border-color: #fff; color: #fff; background: #111; }
+
+    .loader-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #000; z-index: 999; display: none;
+        align-items: center; justify-content: center; flex-direction: column; color: #fff; font-size: 14px; letter-spacing: 2px;
+    }
+
+    /* EDİTÖR ALANI */
+    .editor-container {
+        display: none; width: 95%; max-width: 1400px; flex: 1; gap: 2px; overflow: hidden; height: 100%; border: 1px solid var(--border-color);
+    }
+
+    .sidebar {
+        width: 260px; background: var(--panel-bg); padding: 15px;
+        display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; border-right: 1px solid var(--border-color);
+    }
+    .search-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--border-color); color: white; border-radius: 0; box-sizing: border-box;}
+
+    .main-list {
+        flex: 1; background: #000;
+        overflow-y: auto; padding: 0; position: relative;
+    }
+
+    /* GRUPLAR */
+    .group-block { border-bottom: 1px solid var(--border-color); background: var(--panel-bg); }
+    .group-header { display: flex; align-items: center; padding: 10px; cursor: pointer; transition: 0.2s; }
+    .group-header:hover { background: var(--hover-bg); }
+
+    /* Drag Over Efekti (Beyaz Çizgiler) */
+    .group-header.drag-over-group { background: #222; border: 1px dashed #fff; }
+
+    .group-select-cb { transform: scale(1.2); margin-right: 15px; cursor: pointer; accent-color: #fff; }
+
+    .group-title { flex: 1; font-weight: 500; margin-left: 5px; user-select: none; font-size: 14px; }
+    .badge { background: #000; border: 1px solid #333; font-size: 10px; padding: 2px 8px; margin-right: 10px; color: #888; }
+
+    .group-actions { display: flex; gap: 5px; opacity: 0.2; transition: 0.2s; }
+    .group-block:hover .group-actions { opacity: 1; }
+    .icon-btn { background: none; border: none; font-size: 14px; padding: 2px 5px; color: #555; cursor: pointer; width: auto; }
+    .icon-btn:hover { color: #fff; }
+
+    /* KANALLAR */
+    .channel-list { display: none; background: #000; padding: 0; border-top: 1px solid var(--border-color); }
+    .channel-item {
+        display: flex; align-items: center; padding: 8px 20px; border-bottom: 1px solid #1a1a1a;
+        cursor: grab; transition: background 0.1s; position: relative; color: #ccc; font-size: 13px;
+    }
+    .channel-item:hover { background: #111; color: #fff; }
+    .channel-item.selected { background: #222; color: #fff; border-left: 3px solid #fff; }
+
+    .channel-select-cb { transform: scale(1.1); margin-right: 10px; cursor: pointer; accent-color: #fff; }
+
+    /* Sürükleme Çizgisi (Beyaz) */
+    .channel-item.drag-over-top { border-top: 2px solid #fff; }
+    .channel-item.drag-over-bottom { border-bottom: 2px solid #fff; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #333; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+</style>
+</head>
+<body>
+
+    <div class="loader-overlay" id="loader">
+        <div>LİSTE İŞLENİYOR</div>
+    </div>
+
+    <div class="start-panel" id="startPanel">
+        <div class="panel-title">IPTV MANAGER // V10</div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab1')">Link</button>
+            <button class="tab-btn" onclick="switchTab('tab2')">Panel</button>
+            <button class="tab-btn" onclick="switchTab('tab3')">Dosya</button>
+        </div>
+
+        <div id="tab1" class="tab-content active">
+            <label>M3U Linki</label>
+            <input type="text" id="directUrl" placeholder="http://...">
+            <button class="btn-main" onclick="fetchDirectUrl()">Listeyi Çek</button>
+        </div>
+
+        <div id="tab2" class="tab-content">
+            <label>Sunucu</label>
+            <input type="text" id="host" placeholder="http://...">
+            <label>Kullanıcı Adı</label>
+            <input type="text" id="user">
+            <label>Şifre</label>
+            <input type="text" id="pass">
+            <button class="btn-dark" onclick="generateLinkAndFetch()">Bağlan</button>
+        </div>
+
+        <div id="tab3" class="tab-content">
+            <div class="drop-area" id="dropArea">M3U Dosyasını Sürükle</div>
+            <input type="file" id="fileInput" hidden accept=".m3u,.m3u8,.txt">
+        </div>
+    </div>
+
+    <div class="editor-container" id="editor">
+        <div class="sidebar">
+            <button class="btn-dark" onclick="toggleSelectAllGlobal()">TÜMÜNÜ SEÇ</button>
+            <div style="height:10px;"></div>
+            <button class="btn-dark" onclick="addNewGroup()">+ Grup Ekle</button>
+            <input type="text" id="search" class="search-box" placeholder="Ara..." onkeyup="searchFilter()">
+
+            <div style="flex:1"></div>
+
+            <button class="btn-danger" onclick="deleteSelectedItems()">SEÇİLİLERİ SİL</button>
+            <button class="btn-main" onclick="downloadM3U()">KAYDET VE İNDİR</button>
+            <div id="stats" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></div>
+        </div>
+        <div class="main-list" id="listContainer"></div>
+    </div>
+
+<script>
+    let appData = {};
+    let groupOrder = [];
+    let isAllSelected = false;
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    async function fetchDirectUrl() {
+        let url = document.getElementById('directUrl').value.trim();
+        if(!url) return alert("Link gerekli.");
+        startLoading();
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        try {
+            const response = await fetch(proxyUrl);
+            if(!response.ok) throw new Error("Hata.");
+            const text = await response.text();
+            parseM3U(text);
+        } catch (err) {
+            stopLoading();
+            alert("Otomatik çekilemedi. Dosyayı indirip yükleyin.");
+        }
+    }
+
+    function generateLinkAndFetch() {
+        let host = document.getElementById('host').value.trim();
+        const user = document.getElementById('user').value.trim();
+        const pass = document.getElementById('pass').value.trim();
+        if(!host || !user || !pass) return alert("Bilgiler eksik.");
+        if(!host.startsWith('http')) host = 'http://' + host;
+        const url = `${host}/get.php?username=${user}&password=${pass}&type=m3u_plus&output=ts`;
+        document.getElementById('directUrl').value = url;
+        fetchDirectUrl();
+    }
+
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('fileInput');
+    dropArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.style.borderColor = "#fff"; dropArea.style.color = "#fff"; });
+    dropArea.addEventListener('dragleave', () => { dropArea.style.borderColor = "#555"; dropArea.style.color = "#888"; });
+    dropArea.addEventListener('drop', (e) => { e.preventDefault(); if(e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]); });
+
+    function loadFile(file) {
+        startLoading();
+        const reader = new FileReader();
+        reader.onload = (e) => parseM3U(e.target.result);
+        reader.readAsText(file);
+    }
+
+    function startLoading() { document.getElementById('loader').style.display = 'flex'; }
+    function stopLoading() { document.getElementById('loader').style.display = 'none'; }
+
+    function parseM3U(content) {
+        const lines = content.split('\n');
+        appData = {}; groupOrder = [];
+
+        for(let i=0; i<lines.length; i++) {
+            const line = lines[i].trim();
+            if(line.startsWith('#EXTINF')) {
+                let group = "GRUPSUZ";
+                const match = line.match(/group-title="([^"]*)"/);
+                if(match && match[1]) group = match[1];
+                const parts = line.split(',');
+                const name = parts[parts.length-1].trim();
+                let link = "";
+                if(i+1 < lines.length && !lines[i+1].startsWith('#')) link = lines[i+1].trim();
+
+                if(!appData[group]) { appData[group] = []; groupOrder.push(group); }
+                appData[group].push({
+                    name: name, link: link, rawInfo: line, id: Math.random().toString(36).substr(2, 9)
+                });
+            }
+        }
+        document.getElementById('startPanel').style.display = 'none';
+        document.getElementById('editor').style.display = 'flex';
+        renderApp();
+        stopLoading();
+    }
+
+    function renderApp() {
+        const container = document.getElementById('listContainer');
+        const scrollPos = container.scrollTop;
+        container.innerHTML = "";
+        let totalCh = 0;
+
+        groupOrder.forEach(groupName => {
+            const channels = appData[groupName];
+            totalCh += channels.length;
+
+            const block = document.createElement('div');
+            block.className = 'group-block';
+            block.id = `blk_${groupName}`;
+
+            const header = document.createElement('div');
+            header.className = 'group-header';
+
+            header.onclick = (e) => {
+                if(e.target.type !== 'checkbox' && !e.target.closest('.icon-btn')) toggleGroup(groupName);
+            };
+            header.ondragover = (e) => { e.preventDefault(); header.classList.add('drag-over-group'); };
+            header.ondragleave = () => header.classList.remove('drag-over-group');
+            header.ondrop = (e) => handleDropOnGroup(e, groupName);
+
+            header.innerHTML = `
+                <input type="checkbox" class="group-select-cb" id="gcb_${groupName}" onclick="toggleGroupSelection(this, '${groupName}')">
+                <span class="toggle-icon" style="font-size:12px; margin-right:10px; color:#555;">▶</span>
+                <span class="group-title">${groupName}</span>
+                <span class="badge">${channels.length}</span>
+                <div class="group-actions">
+                    <button class="icon-btn" title="Ad Değiştir" onclick="renameGroup('${groupName}')">✎</button>
+                    <button class="icon-btn" title="Sil" onclick="deleteGroup('${groupName}')">✕</button>
+                </div>
+            `;
+
+            const list = document.createElement('div');
+            list.className = 'channel-list';
+            list.id = `lst_${groupName}`;
+
+            channels.forEach((ch, index) => {
+                const item = document.createElement('div');
+                item.className = 'channel-item';
+                item.draggable = true;
+                item.id = `ch_${ch.id}`;
+
+                item.ondragstart = (e) => handleDragStart(e, ch.id, groupName, index);
+                item.ondragover = (e) => handleDragOverChannel(e, item);
+                item.ondragleave = () => item.classList.remove('drag-over-top', 'drag-over-bottom');
+                item.ondrop = (e) => handleDropOnChannel(e, groupName, index);
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'channel-select-cb';
+                cb.dataset.id = ch.id;
+                cb.dataset.group = groupName;
+                cb.onclick = (e) => {
+                    e.stopPropagation();
+                    if(cb.checked) item.classList.add('selected'); else item.classList.remove('selected');
+                };
+
+                const txt = document.createElement('span');
+                txt.innerText = ch.name;
+
+                item.appendChild(cb);
+                item.appendChild(txt);
+                item.onclick = (e) => { if(e.target !== cb) { cb.checked = !cb.checked; cb.onclick(e); } };
+                list.appendChild(item);
+            });
+
+            block.appendChild(header);
+            block.appendChild(list);
+            container.appendChild(block);
+        });
+
+        document.getElementById('stats').innerText = `${groupOrder.length} GRUP | ${totalCh} KANAL`;
+        container.scrollTop = scrollPos;
+    }
+
+    // --- SEÇİM MANTIĞI (DÜZELTİLDİ: SESSİZ SEÇİM) ---
+    function toggleGroupSelection(groupCb, groupName) {
+        const isChecked = groupCb.checked;
+        const list = document.getElementById(`lst_${groupName}`);
+
+        // DİKKAT: Artık listeyi açmıyoruz (display:block satırı silindi)
+        // Kullanıcı açmadığı sürece kapalı kalır ama seçim arka planda yapılır.
+
+        const channelCbs = list.querySelectorAll('.channel-select-cb');
+        channelCbs.forEach(cb => {
+            cb.checked = isChecked;
+            const item = cb.parentElement;
+            if(isChecked) item.classList.add('selected'); else item.classList.remove('selected');
+        });
+    }
+
+    function toggleSelectAllGlobal() {
+        isAllSelected = !isAllSelected;
+        document.querySelectorAll('.group-select-cb').forEach(gcb => {
+            gcb.checked = isAllSelected;
+            // Manuel tetikle ama açmadan
+            const groupName = gcb.id.replace('gcb_', '');
+            toggleGroupSelection(gcb, groupName);
+        });
+    }
+
+    function deleteSelectedItems() {
+        let selectedGroups = [];
+        let selectedChannelsCount = 0;
+
+        document.querySelectorAll('.group-select-cb:checked').forEach(gcb => selectedGroups.push(gcb.id.replace('gcb_', '')));
+        document.querySelectorAll('.channel-select-cb:checked').forEach(ccb => {
+            if (!selectedGroups.includes(ccb.dataset.group)) selectedChannelsCount++;
+        });
+
+        if (selectedGroups.length === 0 && selectedChannelsCount === 0) return alert("Seçim yapmadınız.");
+        if(!confirm(`Seçilenler silinsin mi?`)) return;
+
+        selectedGroups.forEach(grp => {
+            delete appData[grp];
+            groupOrder = groupOrder.filter(g => g !== grp);
+        });
+
+        Object.keys(appData).forEach(grp => {
+            for (let i = appData[grp].length - 1; i >= 0; i--) {
+                const ch = appData[grp][i];
+                const cb = document.querySelector(`.channel-select-cb[data-id="${ch.id}"]`);
+                if(cb && cb.checked) appData[grp].splice(i, 1);
+            }
+        });
+        renderApp();
+    }
+
+    function toggleGroup(g) {
+        const l = document.getElementById(`lst_${g}`);
+        const i = l.previousElementSibling.querySelector('.toggle-icon');
+        if(l.style.display==='block'){l.style.display='none';i.innerText='▶';}else{l.style.display='block';i.innerText='▼';}
+    }
+
+    function handleDragStart(e,id,g,idx) {
+        let m=[]; const c=document.querySelector(`input[data-id="${id}"]`);
+        if(c&&c.checked){
+            document.querySelectorAll('.channel-select-cb:checked').forEach(cb=>m.push({id:cb.dataset.id,group:cb.dataset.group}));
+        }else{ m.push({id:id,group:g}); }
+        e.dataTransfer.setData('text', JSON.stringify(m));
+    }
+    function handleDragOverChannel(e,el) {
+        e.preventDefault(); e.stopPropagation();
+        const r=el.getBoundingClientRect(); const m=r.top+r.height/2;
+        el.classList.remove('drag-over-top','drag-over-bottom');
+        if(e.clientY<m) el.classList.add('drag-over-top'); else el.classList.add('drag-over-bottom');
+    }
+    function handleDropOnGroup(e,tg) {
+        e.preventDefault(); document.querySelectorAll('.group-header').forEach(h=>h.classList.remove('drag-over-group'));
+        processMove(e.dataTransfer.getData('text'), tg, null);
+    }
+    function handleDropOnChannel(e,tg,ti) {
+        e.preventDefault(); e.stopPropagation();
+        const el=e.currentTarget; el.classList.remove('drag-over-top','drag-over-bottom');
+        const r=el.getBoundingClientRect(); const after=e.clientY>(r.top+r.height/2);
+        processMove(e.dataTransfer.getData('text'), tg, after?ti+1:ti);
+    }
+    function processMove(json,tg,ti) {
+        if(!json)return; const items=JSON.parse(json); if(!items.length)return;
+        let mv=[];
+        items.forEach(it=>{ const i=appData[it.group].findIndex(c=>c.id===it.id); if(i>-1) mv.push(appData[it.group][i]); });
+        items.forEach(it=>{
+            const i=appData[it.group].findIndex(c=>c.id===it.id);
+            if(i>-1) { appData[it.group].splice(i,1); if(it.group===tg && ti!==null && i<ti) ti--; }
+        });
+        if(ti===null) appData[tg].push(...mv); else appData[tg].splice(ti,0,...mv);
+        renderApp();
+    }
+
+    function addNewGroup(){const n=prompt("Grup Adı:");if(n&&!appData[n]){appData[n]=[];groupOrder.unshift(n);renderApp();}}
+    function renameGroup(o){const n=prompt("Yeni ad:",o);if(n&&n!==o){appData[n]=appData[n]?appData[n].concat(appData[o]):appData[o];delete appData[o];const i=groupOrder.indexOf(o);if(i!==-1)groupOrder[i]=n;renderApp();}}
+    function deleteGroup(g){if(confirm("Silinsin mi?")){delete appData[g];groupOrder=groupOrder.filter(x=>x!==g);renderApp();}}
+    function searchFilter(){
+        const t=document.getElementById('search').value.toLowerCase();
+        document.querySelectorAll('.group-block').forEach(b=>{
+            const title=b.querySelector('.group-title').innerText.toLowerCase();
+            const hasCh=[...b.querySelectorAll('.channel-item span')].some(s=>s.innerText.toLowerCase().includes(t));
+            b.style.display=(title.includes(t)||hasCh)?'block':'none';
+        });
+    }
+    function downloadM3U(){
+        let t="#EXTM3U\n";
+        groupOrder.forEach(g=>{
+            appData[g].forEach(c=>{
+                let i=c.rawInfo.replace(/group-title="[^"]*"/,`group-title="${g}"`);
+                if(!i.includes('group-title=')) i=i.replace('#EXTINF:-1',`#EXTINF:-1 group-title="${g}"`);
+                t+=`${i}\n${c.link}\n`;
+            });
+        });
+        const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"})); a.download="IPTV_V10_PRO.m3u"; a.click();
+    }
+</script>
+</body>
+</html>
