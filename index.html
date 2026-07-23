@@ -3,135 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IPTV V10 - NOIRE EDITION</title>
+<title>IPTV Manager</title>
 <style>
-    /* --- V10 MONOKROM TEMA --- */
+    /* --- PARIONS TEMA (ortak) --- */
     :root {
-        --bg-color: #000000;
-        --panel-bg: #111111;
-        --border-color: #333333;
-        --text-main: #eeeeee;
-        --text-dim: #888888;
-        --accent-color: #ffffff; /* Vurgular Beyaz */
-        --hover-bg: #222222;
-        --selected-bg: #333333;
+        --bg-color: #0f1420;
+        --panel-bg: #1a2233;
+        --panel-bg2: #131a2b;
+        --border-color: #2a3550;
+        --text-main: #eaf0fb;
+        --text-dim: #94a2bd;
+        --accent-color: #6d86f0;
+        --accent-dark: #5670e0;
+        --hover-bg: #22304d;
+        --selected-bg: #26314f;
+        --danger: #ff6b6b;
     }
 
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: var(--bg-color);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: radial-gradient(1000px 500px at 50% -200px, rgba(109,134,240,.20), transparent), var(--bg-color);
         color: var(--text-main);
         margin: 0; padding: 20px;
         display: flex; flex-direction: column; align-items: center;
         height: 100vh; box-sizing: border-box; overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
     }
 
     /* GİRİŞ PANELİ */
     .start-panel {
         background: var(--panel-bg); padding: 25px; border: 1px solid var(--border-color);
-        border-radius: 0; /* Köşeli tasarım daha ciddi durur */
+        border-radius: 22px;
         width: 95%; max-width: 600px;
-        box-shadow: 0 0 20px rgba(255,255,255,0.05); z-index: 10;
+        box-shadow: 0 12px 40px rgba(0,0,0,.35); z-index: 10;
     }
-    .panel-title { text-align: center; color: var(--accent-color); margin-bottom: 20px; font-size: 20px; letter-spacing: 2px; text-transform: uppercase; font-weight: 300; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .panel-title { text-align: center; color: var(--text-main); margin-bottom: 20px; font-size: 20px; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; }
 
-    .tabs { display: flex; justify-content: center; margin-bottom: 20px; }
+    .tabs { display: flex; justify-content: center; margin-bottom: 20px; gap: 4px; }
     .tab-btn {
-        background: none; border: none; color: var(--text-dim); padding: 10px 20px; cursor: pointer; font-size: 13px; text-transform: uppercase;
-        border-bottom: 2px solid transparent; transition: 0.3s;
+        background: none; border: none; color: var(--text-dim); padding: 10px 20px; cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: .5px;
+        border-bottom: 2px solid transparent; transition: 0.2s;
     }
     .tab-btn.active { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    label { display: block; margin-bottom: 5px; color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    label { display: block; margin-bottom: 6px; color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
     input[type="text"], input[type="password"] {
-        width: 100%; padding: 12px; border-radius: 0;
-        border: 1px solid var(--border-color); background: #000; color: #fff; box-sizing: border-box; margin-bottom: 15px;
-        font-family: monospace;
+        width: 100%; padding: 12px; border-radius: 12px;
+        border: 1px solid var(--border-color); background: var(--panel-bg2); color: var(--text-main); box-sizing: border-box; margin-bottom: 15px;
+        font-family: inherit; font-size: 14px;
     }
-    input:focus { border-color: #fff; outline: none; }
+    input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 0 3px rgba(109,134,240,.18); }
 
-    /* SİYAH BEYAZ BUTONLAR */
-    button { cursor: pointer; padding: 12px; border-radius: 0; border: 1px solid var(--border-color); font-weight: bold; transition: 0.2s; width: 100%; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+    button { cursor: pointer; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); font-weight: 700; transition: 0.15s; width: 100%; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
 
-    /* Ana Buton (Beyaz) */
-    .btn-main { background: #fff; color: #000; border: 1px solid #fff; }
-    .btn-main:hover { background: #ccc; border-color: #ccc; }
+    /* Ana Buton (Periwinkle) */
+    .btn-main { background: var(--accent-color); color: #0f1420; border: 1px solid var(--accent-color); }
+    .btn-main:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
 
-    /* İkincil Buton (Siyah/Gri) */
-    .btn-dark { background: #222; color: #fff; border: 1px solid #333; }
-    .btn-dark:hover { background: #333; border-color: #555; }
+    /* İkincil Buton */
+    .btn-dark { background: var(--panel-bg2); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-dark:hover { background: var(--hover-bg); border-color: var(--accent-color); }
 
-    /* Silme Butonu (Koyu ama belirgin) */
-    .btn-danger { background: #000; color: #fff; border: 1px solid #555; }
-    .btn-danger:hover { background: #333; border-color: #fff; }
+    /* Silme Butonu */
+    .btn-danger { background: var(--panel-bg2); color: var(--danger); border: 1px solid var(--border-color); }
+    .btn-danger:hover { background: rgba(255,107,107,.12); border-color: var(--danger); }
 
     .drop-area {
-        border: 1px dashed #555; background: #0a0a0a;
-        padding: 40px; cursor: pointer; text-align: center; color: #888; transition: 0.3s;
+        border: 2px dashed var(--border-color); background: var(--panel-bg2); border-radius: 14px;
+        padding: 40px; cursor: pointer; text-align: center; color: var(--text-dim); transition: 0.2s;
     }
-    .drop-area:hover { border-color: #fff; color: #fff; background: #111; }
+    .drop-area:hover { border-color: var(--accent-color); color: var(--accent-color); background: var(--hover-bg); }
 
     .loader-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: #000; z-index: 999; display: none;
-        align-items: center; justify-content: center; flex-direction: column; color: #fff; font-size: 14px; letter-spacing: 2px;
+        background: rgba(15,20,32,.92); z-index: 999; display: none;
+        align-items: center; justify-content: center; flex-direction: column; color: var(--accent-color); font-size: 14px; letter-spacing: 2px; font-weight: 700;
     }
 
     /* EDİTÖR ALANI */
     .editor-container {
-        display: none; width: 95%; max-width: 1400px; flex: 1; gap: 2px; overflow: hidden; height: 100%; border: 1px solid var(--border-color);
+        display: none; width: 95%; max-width: 1400px; flex: 1; gap: 2px; overflow: hidden; height: 100%;
+        border: 1px solid var(--border-color); border-radius: 22px; box-shadow: 0 12px 40px rgba(0,0,0,.35);
     }
 
     .sidebar {
         width: 260px; background: var(--panel-bg); padding: 15px;
         display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; border-right: 1px solid var(--border-color);
+        border-radius: 22px 0 0 22px;
     }
-    .search-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--border-color); color: white; border-radius: 0; box-sizing: border-box;}
+    .search-box { width: 100%; padding: 10px; background: var(--panel-bg2); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; box-sizing: border-box; font-size: 13px;}
+    .search-box:focus { border-color: var(--accent-color); outline: none; }
 
     .main-list {
-        flex: 1; background: #000;
+        flex: 1; background: var(--bg-color);
         overflow-y: auto; padding: 0; position: relative;
+        border-radius: 0 22px 22px 0;
     }
 
     /* GRUPLAR */
     .group-block { border-bottom: 1px solid var(--border-color); background: var(--panel-bg); }
-    .group-header { display: flex; align-items: center; padding: 10px; cursor: pointer; transition: 0.2s; }
+    .group-header { display: flex; align-items: center; padding: 10px; cursor: pointer; transition: 0.15s; }
     .group-header:hover { background: var(--hover-bg); }
 
-    /* Drag Over Efekti (Beyaz Çizgiler) */
-    .group-header.drag-over-group { background: #222; border: 1px dashed #fff; }
+    /* Drag Over Efekti */
+    .group-header.drag-over-group { background: var(--hover-bg); border: 1px dashed var(--accent-color); }
 
-    .group-select-cb { transform: scale(1.2); margin-right: 15px; cursor: pointer; accent-color: #fff; }
+    .group-select-cb { transform: scale(1.2); margin-right: 15px; cursor: pointer; accent-color: var(--accent-color); }
 
-    .group-title { flex: 1; font-weight: 500; margin-left: 5px; user-select: none; font-size: 14px; }
-    .badge { background: #000; border: 1px solid #333; font-size: 10px; padding: 2px 8px; margin-right: 10px; color: #888; }
+    .group-title { flex: 1; font-weight: 600; margin-left: 5px; user-select: none; font-size: 14px; }
+    .badge { background: var(--panel-bg2); border: 1px solid var(--border-color); border-radius: 20px; font-size: 10px; padding: 2px 8px; margin-right: 10px; color: var(--text-dim); }
 
-    .group-actions { display: flex; gap: 5px; opacity: 0.2; transition: 0.2s; }
+    .group-actions { display: flex; gap: 5px; opacity: 0.25; transition: 0.2s; }
     .group-block:hover .group-actions { opacity: 1; }
-    .icon-btn { background: none; border: none; font-size: 14px; padding: 2px 5px; color: #555; cursor: pointer; width: auto; }
-    .icon-btn:hover { color: #fff; }
+    .icon-btn { background: none; border: none; font-size: 14px; padding: 2px 5px; color: var(--text-dim); cursor: pointer; width: auto; }
+    .icon-btn:hover { color: var(--accent-color); }
 
     /* KANALLAR */
-    .channel-list { display: none; background: #000; padding: 0; border-top: 1px solid var(--border-color); }
+    .channel-list { display: none; background: var(--bg-color); padding: 0; border-top: 1px solid var(--border-color); }
     .channel-item {
-        display: flex; align-items: center; padding: 8px 20px; border-bottom: 1px solid #1a1a1a;
-        cursor: grab; transition: background 0.1s; position: relative; color: #ccc; font-size: 13px;
+        display: flex; align-items: center; padding: 8px 20px; border-bottom: 1px solid rgba(42,53,80,.5);
+        cursor: grab; transition: background 0.1s; position: relative; color: var(--text-dim); font-size: 13px;
     }
-    .channel-item:hover { background: #111; color: #fff; }
-    .channel-item.selected { background: #222; color: #fff; border-left: 3px solid #fff; }
+    .channel-item:hover { background: var(--panel-bg); color: var(--text-main); }
+    .channel-item.selected { background: var(--selected-bg); color: var(--text-main); border-left: 3px solid var(--accent-color); }
 
-    .channel-select-cb { transform: scale(1.1); margin-right: 10px; cursor: pointer; accent-color: #fff; }
+    .channel-select-cb { transform: scale(1.1); margin-right: 10px; cursor: pointer; accent-color: var(--accent-color); }
 
-    /* Sürükleme Çizgisi (Beyaz) */
-    .channel-item.drag-over-top { border-top: 2px solid #fff; }
-    .channel-item.drag-over-bottom { border-bottom: 2px solid #fff; }
+    /* Sürükleme Çizgisi */
+    .channel-item.drag-over-top { border-top: 2px solid var(--accent-color); }
+    .channel-item.drag-over-bottom { border-bottom: 2px solid var(--accent-color); }
 
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #000; }
-    ::-webkit-scrollbar-thumb { background: #333; }
-    ::-webkit-scrollbar-thumb:hover { background: #555; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
 </style>
 </head>
@@ -142,7 +149,7 @@
     </div>
 
     <div class="start-panel" id="startPanel">
-        <div class="panel-title">IPTV MANAGER // V10</div>
+        <div class="panel-title">📺 IPTV Manager</div>
 
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('tab1')">Link</button>
@@ -183,7 +190,7 @@
 
             <button class="btn-danger" onclick="deleteSelectedItems()">SEÇİLİLERİ SİL</button>
             <button class="btn-main" onclick="downloadM3U()">KAYDET VE İNDİR</button>
-            <div id="stats" style="font-size:10px; text-align:center; color:#555; margin-top:10px;"></div>
+            <div id="stats" style="font-size:10px; text-align:center; color:var(--text-dim); margin-top:10px;"></div>
         </div>
         <div class="main-list" id="listContainer"></div>
     </div>
@@ -231,8 +238,8 @@
     const fileInput = document.getElementById('fileInput');
     dropArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
-    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.style.borderColor = "#fff"; dropArea.style.color = "#fff"; });
-    dropArea.addEventListener('dragleave', () => { dropArea.style.borderColor = "#555"; dropArea.style.color = "#888"; });
+    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.style.borderColor = "#6d86f0"; dropArea.style.color = "#6d86f0"; });
+    dropArea.addEventListener('dragleave', () => { dropArea.style.borderColor = "#2a3550"; dropArea.style.color = "#94a2bd"; });
     dropArea.addEventListener('drop', (e) => { e.preventDefault(); if(e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]); });
 
     function loadFile(file) {
@@ -298,7 +305,7 @@
 
             header.innerHTML = `
                 <input type="checkbox" class="group-select-cb" id="gcb_${groupName}" onclick="toggleGroupSelection(this, '${groupName}')">
-                <span class="toggle-icon" style="font-size:12px; margin-right:10px; color:#555;">▶</span>
+                <span class="toggle-icon" style="font-size:12px; margin-right:10px; color:var(--text-dim);">▶</span>
                 <span class="group-title">${groupName}</span>
                 <span class="badge">${channels.length}</span>
                 <div class="group-actions">
@@ -350,14 +357,10 @@
         container.scrollTop = scrollPos;
     }
 
-    // --- SEÇİM MANTIĞI (DÜZELTİLDİ: SESSİZ SEÇİM) ---
+    // --- SEÇİM MANTIĞI (SESSİZ SEÇİM) ---
     function toggleGroupSelection(groupCb, groupName) {
         const isChecked = groupCb.checked;
         const list = document.getElementById(`lst_${groupName}`);
-
-        // DİKKAT: Artık listeyi açmıyoruz (display:block satırı silindi)
-        // Kullanıcı açmadığı sürece kapalı kalır ama seçim arka planda yapılır.
-
         const channelCbs = list.querySelectorAll('.channel-select-cb');
         channelCbs.forEach(cb => {
             cb.checked = isChecked;
@@ -370,7 +373,6 @@
         isAllSelected = !isAllSelected;
         document.querySelectorAll('.group-select-cb').forEach(gcb => {
             gcb.checked = isAllSelected;
-            // Manuel tetikle ama açmadan
             const groupName = gcb.id.replace('gcb_', '');
             toggleGroupSelection(gcb, groupName);
         });
@@ -464,7 +466,7 @@
                 t+=`${i}\n${c.link}\n`;
             });
         });
-        const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"})); a.download="IPTV_V10_PRO.m3u"; a.click();
+        const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"})); a.download="IPTV_liste.m3u"; a.click();
     }
 </script>
 </body>
