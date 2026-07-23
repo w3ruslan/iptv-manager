@@ -207,19 +207,46 @@
         document.getElementById(tabId).classList.add('active');
     }
 
+    // Farklı CORS proxy'leri (biri çökerse diğeri denenir)
+    const PROXIES = [
+        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+        u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,
+        u => `https://thingproxy.freeboard.io/fetch/${u}`
+    ];
+
+    function looksLikeM3U(txt){
+        return txt && txt.indexOf('#EXTM3U') !== -1 || (txt && txt.indexOf('#EXTINF') !== -1);
+    }
+
+    async function fetchViaProxies(url){
+        let lastErr = "";
+        for(const build of PROXIES){
+            try{
+                const ctrl = new AbortController();
+                const timer = setTimeout(()=>ctrl.abort(), 25000);
+                const resp = await fetch(build(url), { signal: ctrl.signal });
+                clearTimeout(timer);
+                if(!resp.ok){ lastErr = "HTTP "+resp.status; continue; }
+                const text = await resp.text();
+                if(looksLikeM3U(text)) return text;
+                lastErr = "Geçersiz içerik (M3U değil)";
+            }catch(e){ lastErr = e.name === 'AbortError' ? "Zaman aşımı" : "Bağlantı hatası"; }
+        }
+        throw new Error(lastErr || "Bilinmeyen hata");
+    }
+
     async function fetchDirectUrl() {
         let url = document.getElementById('directUrl').value.trim();
         if(!url) return alert("Link gerekli.");
+        if(!/^https?:\/\//i.test(url)) url = 'http://' + url;
         startLoading();
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
         try {
-            const response = await fetch(proxyUrl);
-            if(!response.ok) throw new Error("Hata.");
-            const text = await response.text();
+            const text = await fetchViaProxies(url);
             parseM3U(text);
         } catch (err) {
             stopLoading();
-            alert("Otomatik çekilemedi. Dosyayı indirip yükleyin.");
+            alert("Otomatik çekilemedi ("+err.message+").\n\nÇözüm: Linki tarayıcıda açıp .m3u dosyasını indir, sonra 'Dosya' sekmesinden yükle.");
         }
     }
 
@@ -228,8 +255,10 @@
         const user = document.getElementById('user').value.trim();
         const pass = document.getElementById('pass').value.trim();
         if(!host || !user || !pass) return alert("Bilgiler eksik.");
-        if(!host.startsWith('http')) host = 'http://' + host;
-        const url = `${host}/get.php?username=${user}&password=${pass}&type=m3u_plus&output=ts`;
+        if(!/^https?:\/\//i.test(host)) host = 'http://' + host;
+        host = host.replace(/\/+$/,'');                 // sondaki / temizle
+        host = host.replace(/\/(get|player_api|panel_api)\.php.*$/i,''); // yanlışlıkla eklenen path'i temizle
+        const url = `${host}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u_plus&output=ts`;
         document.getElementById('directUrl').value = url;
         fetchDirectUrl();
     }
