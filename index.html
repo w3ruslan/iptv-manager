@@ -247,6 +247,9 @@ async function boot(){
         $('pw2wrap').classList.add('hidden');
         $('lockBtn').innerText='Gir';
     }
+    // bu cihaz parolayı hatırlıyorsa otomatik gir
+    const remembered=localStorage.getItem('iptv_pw');
+    if(blob && remembered){ $('pw1').value=remembered; await lockSubmit(); }
 }
 async function lockSubmit(){
     const pw=$('pw1').value; if(!pw){ $('lockErr').innerText='Parola gerekli.'; return; }
@@ -270,14 +273,16 @@ async function lockSubmit(){
             USERS.forEach(([id])=>{ if(!SYNC.users[id]) SYNC.users[id]={note:"",server:"",saved:[]}; });
             loadedOK=true;
         }
+        localStorage.setItem('iptv_pw', pw); // bu cihaz hatırlasın
         loading(false);
         enterApp();
     }catch(e){
         loading(false);
+        localStorage.removeItem('iptv_pw'); // yanlışsa hatırlama
         $('lockErr').innerText = blob ? 'Parola yanlış.' : e.message;
     }
 }
-function lockNow(){ location.reload(); }
+function lockNow(){ localStorage.removeItem('iptv_pw'); location.reload(); }
 
 /* ============ PANEL ============ */
 function enterApp(){
