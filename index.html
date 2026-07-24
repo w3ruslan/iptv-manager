@@ -21,9 +21,9 @@
     .b-main:hover{background:var(--accent2);border-color:var(--accent2)}
     .b-danger{color:var(--danger)}
     .b-danger:hover{background:rgba(255,107,107,.12);border-color:var(--danger)}
-    input,textarea{font-family:inherit;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    input:not([type=checkbox]),textarea{font-family:inherit;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
         border-radius:12px;padding:10px;font-size:14px;width:100%}
-    input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,134,240,.18)}
+    input:not([type=checkbox]):focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,134,240,.18)}
     .wrap{max-width:900px;margin:0 auto}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
     .lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
