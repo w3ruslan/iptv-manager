@@ -131,6 +131,7 @@
             <button onclick="openGenel()" id="genelOpenBtn">✎ Aç / düzenle</button>
             <button onclick="downloadCtx('genel')">⬇ İndir</button>
             <button onclick="pickGeneralFile()">⬆ Dosyadan yükle</button>
+            <button class="b-danger" onclick="deleteGenel()" title="Genel listeyi sil">🗑 Sil</button>
         </div>
 
         <div class="row" style="align-items:center;margin:16px 2px 8px">
@@ -230,7 +231,12 @@ function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('iptvdb',
     r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbGet(k){ const db=await idb(); return new Promise((res,rej)=>{ const t=db.transaction('genel','readonly').objectStore('genel').get(k); t.onsuccess=()=>res(t.result||null); t.onerror=()=>rej(t.error); }); }
 async function idbSet(k,v){ const db=await idb(); return new Promise((res,rej)=>{ const t=db.transaction('genel','readwrite').objectStore('genel').put(v,k); t.onsuccess=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function idbDel(k){ const db=await idb(); return new Promise((res,rej)=>{ const t=db.transaction('genel','readwrite').objectStore('genel').delete(k); t.onsuccess=()=>res(); t.onerror=()=>rej(t.error); }); }
 function genelKey(){ return 'genel_'+USER; }
+async function deleteGenel(){ const g=await idbGet(genelKey()); if(!g){ toast('Zaten genel liste yok'); return; }
+    if(!confirm('Bu kullanıcının GENEL listesi tamamen silinsin mi?'))return;
+    await idbDel(genelKey()); if(CTX.type==='genel') CTX={type:null,id:null};
+    toast('Genel liste silindi'); renderPanel(); }
 
 /* ============ AÇILIŞ / PAROLA ============ */
 async function boot(){
